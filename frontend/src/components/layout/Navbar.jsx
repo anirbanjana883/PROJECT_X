@@ -4,10 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, logout } from '../../redux/slices/authSlice';
 import ThemeToggle from '../features/theme/ThemeToggle';
 import { api } from '../../hooks/useGetCurrentUser';
-import { FaBars, FaTimes, FaUserCircle } from 'react-icons/fa';
-
-// Placeholder text logo if image is missing
-// import logoIcon from '../../assets/logo-icon.png'; 
+import { FaBars, FaTimes, FaUserCircle, FaSignOutAlt, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
 
 const Navbar = () => {
   const user = useSelector(selectUser);
@@ -15,14 +12,27 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // --- Handlers ---
   const handleLogout = async () => {
     try {
         await api.get('/auth/logout');
         dispatch(logout());
+        setIsMobileMenuOpen(false); // Close menu on action
         navigate('/login');
     } catch (error) {
         console.error("Logout failed", error);
     }
+  };
+
+  const handleProfileClick = () => {
+    setIsMobileMenuOpen(false); // Close menu on action
+    navigate('/patient/profile');
+  };
+
+  // Helper for mobile links
+  const mobileLinkClick = (path) => {
+    setIsMobileMenuOpen(false);
+    navigate(path);
   };
 
   return (
@@ -31,22 +41,25 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           
           {/* Logo Area */}
-          <Link to="/" className="flex items-center space-x-2">
-            {/* <img src={logoIcon} alt="Logo" className="h-8 w-8" /> */}
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-              IndriyaX
+          <Link to="/" className="flex items-center space-x-2 group">
+            <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+              Indriya<span className="text-blue-600 dark:text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]">X</span>
             </span>
           </Link>
 
-          {/* Desktop Menu */}
+          {/* --- Desktop Menu (Hidden on md and down) --- */}
           <div className="hidden md:flex items-center space-x-6">
             <ThemeToggle />
 
             {user ? (
               <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                   <FaUserCircle className="text-lg"/> {user.name}
-                </span>
+                <button 
+                  onClick={handleProfileClick}
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <FaUserCircle className="text-lg"/> 
+                  {user.name}
+                </button>
                 <button 
                   onClick={handleLogout}
                   className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
@@ -65,8 +78,8 @@ const Navbar = () => {
               </div>
             )}
           </div>
-
-          {/* Mobile Menu Button */}
+          
+          {/* --- Mobile Menu Button (Visible on md and down) --- */}
           <div className="md:hidden flex items-center gap-4">
             <ThemeToggle />
             <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-gray-700 dark:text-gray-300">
@@ -76,18 +89,39 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* --- Mobile Menu Dropdown (Corrected) --- */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+        <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-lg">
           <div className="px-4 pt-2 pb-4 space-y-2">
             {user ? (
-               <button onClick={handleLogout} className="block w-full text-left px-3 py-2 text-red-600 font-medium">
-                 Logout
-               </button>
+               <>
+                 <button 
+                   onClick={handleProfileClick} // <-- FIXED: Added handler
+                   className="block w-full text-left px-3 py-3 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg flex items-center gap-3"
+                 >
+                   <FaUserCircle /> Profile ({user.name})
+                 </button>
+                 <button 
+                   onClick={handleLogout} 
+                   className="block w-full text-left px-3 py-3 text-red-600 font-medium hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg flex items-center gap-3"
+                 >
+                   <FaSignOutAlt /> Logout
+                 </button>
+               </>
             ) : (
               <>
-                <Link to="/login" className="block px-3 py-2 text-gray-700 dark:text-gray-300">Login</Link>
-                <Link to="/signup" className="block px-3 py-2 text-blue-600 font-bold">Get Started</Link>
+                <button 
+                  onClick={() => mobileLinkClick('/login')}
+                  className="block w-full text-left px-3 py-3 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg flex items-center gap-3"
+                >
+                  <FaSignInAlt /> Login
+                </button>
+                <button 
+                  onClick={() => mobileLinkClick('/signup')}
+                  className="block w-full text-left px-3 py-3 bg-blue-600 text-white font-medium rounded-lg flex items-center gap-3"
+                >
+                  <FaUserPlus /> Get Started
+                </button>
               </>
             )}
           </div>

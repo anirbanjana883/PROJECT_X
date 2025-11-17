@@ -4,6 +4,8 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import authRouter from './routes/authRouter.js';
 import connectDB from './config/db.js'; 
+import therapyRouter from './routes/therapyRouter.js';
+import doctorRouter from './routes/doctorRouter.js';
 
 
 
@@ -31,6 +33,8 @@ app.get('/', (req, res) => {
 
 // --- API ROUTES ---
 app.use('/api/v1/auth', authRouter); 
+app.use('/api/v1/therapy', therapyRouter);
+app.use('/api/v1/doctor', doctorRouter);
 
 // --- Start Server ---
 app.listen(PORT, () => {

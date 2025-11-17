@@ -1,1 +1,83 @@
 @import "tailwindcss";
+
+/* --- 1. Define Theme & Tailwind Animations --- */
+@theme {
+  /* Animations */
+  --animate-blob: blob 7s infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-glow: glow 2s ease-in-out infinite alternate;
+  --animate-shimmer: shimmer 1.5s infinite;
+
+  /* Keyframes for Tailwind */
+  @keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+
+  @keyframes glow {
+    0% { box-shadow: 0 0 5px #3b82f6, 0 0 10px #3b82f6; }
+    100% { box-shadow: 0 0 20px #06b6d4, 0 0 30px #06b6d4; }
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  @keyframes pulse-glow {
+    0% {
+      opacity: 0.7;
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    }
+    70% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    }
+    100% {
+      opacity: 0.7;
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+  }
+}
+
+/* --- 2. Dark Mode Setup --- */
+@custom-variant dark (&:where(.dark, .dark *));
+
+
+/* --- 3. Base Styles --- */
+@layer base {
+  body {
+    /* Set the futuristic gradient background for the whole app */
+    @apply bg-gray-50 dark:bg-gray-900 transition-colors duration-300 ease-in-out font-sans;
+  }
+}
+
+/* --- 4. Custom Scrollbar --- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-900;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-blue-500/50 rounded-full hover:bg-blue-600;
+}
+
+/* --- 5. Manual Animation Classes (MUST BE OUTSIDE @THEME) --- */
+@keyframes shimmer-move {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.shimmer-effect {
+  animation: shimmer-move 1.5s infinite linear;
+}

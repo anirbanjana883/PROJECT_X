@@ -1,67 +1,48 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../../redux/slices/authSlice';
-import { FaChartLine, FaGamepad, FaCalendarCheck } from 'react-icons/fa';
+import { selectGames } from '../../redux/slices/therapySlice'; // Import selector
+import GameCard from '../../components/features/therapy/GameCard'; // Import Card
+import { FaFire } from 'react-icons/fa';
 
 const PatientDashboard = () => {
   const user = useSelector(selectUser);
+  const games = useSelector(selectGames);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
       
-      {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Hello, {user?.name || 'Patient'} 👋
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
-          Ready for your daily vision therapy session?
-        </p>
+      {/* --- Welcome Header --- */}
+      <div className="flex flex-col md:flex-row justify-between items-end mb-10 border-b border-gray-200 dark:border-gray-700 pb-6">
+        <div>
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+            Mission Control
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+            Welcome back, <span className="text-blue-600 dark:text-blue-400 font-semibold">{user?.name}</span>. 
+            Let's train your vision.
+          </p>
+        </div>
+
+        {/* Streak Badge */}
+        <div className="mt-4 md:mt-0 flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-full text-orange-600 dark:text-orange-400">
+            <FaFire className="animate-pulse" />
+            <span className="font-bold">3 Day Streak</span>
+        </div>
       </div>
       
-      {/* Quick Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        
-        {/* Card 1: Daily Goal */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Daily Goal</h3>
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-                    <FaCalendarCheck />
-                </div>
-            </div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white">0 / 30</div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">minutes completed</p>
-        </div>
+      {/* --- Games Grid --- */}
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+        Assigned Therapies
+        <span className="text-sm font-normal bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md text-gray-500">
+          {games.length} Available
+        </span>
+      </h2>
 
-        {/* Card 2: Current Level */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Next Game</h3>
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
-                    <FaGamepad />
-                </div>
-            </div>
-            <div className="text-xl font-bold text-gray-900 dark:text-white">Space Pursuits</div>
-            <button className="mt-3 w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
-                Start Playing
-            </button>
-        </div>
-
-        {/* Card 3: Progress */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md">
-             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Progress</h3>
-                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg text-green-600 dark:text-green-400">
-                    <FaChartLine />
-                </div>
-            </div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white">Level 3</div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mt-3">
-                <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '45%' }}></div>
-            </div>
-        </div>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {games.map((game) => (
+          <GameCard key={game.id} game={game} />
+        ))}
       </div>
 
     </div>

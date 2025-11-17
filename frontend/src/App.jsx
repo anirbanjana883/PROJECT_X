@@ -20,11 +20,13 @@ import HomePage from './pages/public/HomePage';
 import LoginPage from './pages/public/LoginPage';
 import SignupPage from './pages/public/SignupPage';
 import ForgotPasswordPage from './pages/public/ForgotPasswordPage';
+import PatientProfile from './pages/patient/PatientProfile';
 
 // Protected Pages
 import PatientDashboard from './pages/patient/PatientDashboard';
 // import PatientTherapySession from './pages/patient/PatientTherapySession'; // Example
 import DoctorDashboard from './pages/doctor/DoctorDashboard';
+import TherapySessionPage from './components/features/therapy/TherapySessionPage';
 
 // Global Server URL (Optional, if you need it exported)
 export const serverUrl = "http://localhost:5000"; 
@@ -79,8 +81,9 @@ function App() {
           {/* --- PATIENT ROUTES (Role Based) --- */}
           <Route element={<PatientRoute />}>
             <Route path="/patient/dashboard" element={<PatientDashboard />} />
+            <Route path="/therapy/session/:id" element={<TherapySessionPage />} />
             {/* <Route path="/therapy/session/:id" element={<PatientTherapySession />} /> */}
-            {/* <Route path="/patient/profile" element={<ProfilePage />} /> */}
+            <Route path="/patient/profile" element={<PatientProfile />} />
           </Route>
 
 
