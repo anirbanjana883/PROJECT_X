@@ -1,3 +1,4 @@
+// backend/models/TherapySession.js
 import mongoose from 'mongoose';
 
 const therapySessionSchema = new mongoose.Schema({
@@ -6,8 +7,14 @@ const therapySessionSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+
+    assignmentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'TherapyAssignment',
+        required: false 
+    },
     gameId: {
-        type: String, // e.g., 'g1', 'g2' (from your frontend IDs)
+        type: String, 
         required: true
     },
     gameName: {
@@ -19,12 +26,8 @@ const therapySessionSchema = new mongoose.Schema({
         required: true
     },
     durationPlayed: {
-        type: Number, // in seconds
+        type: Number, 
         required: true
-    },
-    accuracy: {
-        type: Number, // Percentage (0-100) - Optional for now
-        default: 0
     },
     status: {
         type: String,

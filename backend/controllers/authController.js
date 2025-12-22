@@ -95,7 +95,7 @@ export const logIn = async (req, res) => {
         return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Please provide email and password' });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
     if (!user) return res.status(StatusCodes.UNAUTHORIZED).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(password, user.password);

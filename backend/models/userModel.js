@@ -1,8 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import validator from 'validator';
-// We don't need the JWT method here anymore,
-// as it's handled by the external genToken.js
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -10,11 +8,10 @@ const userSchema = new mongoose.Schema({
         required: [true, 'Please provide your name'],
         trim: true
     },
-    // --- ADDED FROM RANBHOOMI ---
     username: {
         type: String,
         unique: true,
-        // This will be set by the 'generateUsername' function
+        sparse: true // Allows null/undefined values to not conflict
     },
     email: {
         type: String,
@@ -25,16 +22,30 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        // Not required, because of Google Auth
         minlength: 6,
+        select: false 
     },
     role: {
         type: String,
-        enum: ['patient', 'doctor', 'admin'], // Your roles for IndriyaX
+        enum: ['patient', 'doctor', 'admin'], 
         default: 'patient'
     },
     
-    // --- FIELDS FOR PASSWORD RESET (from Ranbhoomi) ---
+    // --- THIS IS THE CRITICAL FIX ---
+    // This field must exist for the Doctor Dashboard to work
+    assignedPatients: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    // --------------------------------
+
+    // --- Doctor Specific ---
+    clinicName: {
+        type: String,
+        trim: true
+    },
+
+    // --- Password Reset Fields ---
     resetOtp: {
         type: String,
         default: undefined
@@ -46,23 +57,15 @@ const userSchema = new mongoose.Schema({
     isOtpVerified: {
         type: Boolean,
         default: false
-    },
-    
-    // --- Doctor-Specific ---
-    clinicName: {
-        type: String,
-        trim: true
-    },
-    
+    }
 }, { timestamps: true });
 
 // --- Mongoose Methods (Helpers) ---
-// We keep the 'comparePassword' method from our original plan,
-// but the 'signup' code handles hashing manually, which is also fine.
 userSchema.methods.comparePassword = async function (candidatePassword) {
     if (!this.password) return false;
     return await bcrypt.compare(candidatePassword, this.password);
 };
 
-const User = mongoose.model('User', userSchema);
+// Check if model already exists to prevent overwrite errors in hot-reload
+const User = mongoose.models.User || mongoose.model('User', userSchema);
 export default User;

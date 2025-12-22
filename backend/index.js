@@ -6,6 +6,7 @@ import authRouter from './routes/authRouter.js';
 import connectDB from './config/db.js'; 
 import therapyRouter from './routes/therapyRouter.js';
 import doctorRouter from './routes/doctorRouter.js';
+import adminRouter from './routes/adminRouter.js';
 
 
 
@@ -35,6 +36,7 @@ app.get('/', (req, res) => {
 app.use('/api/v1/auth', authRouter); 
 app.use('/api/v1/therapy', therapyRouter);
 app.use('/api/v1/doctor', doctorRouter);
+app.use('/api/v1/admin', adminRouter);
 
 // --- Start Server ---
 app.listen(PORT, () => {
