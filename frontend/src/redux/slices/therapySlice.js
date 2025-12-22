@@ -1,34 +1,51 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  // Mock data for now - later this comes from Backend
   assignedGames: [
     {
       id: 'g1',
       title: 'Space Pursuits',
       category: 'Oculomotor',
-      description: 'Track moving targets to improve smooth pursuit eye movements.',
-      thumbnail: '🚀',
-      color: 'from-purple-500 to-indigo-500',
+      description: 'Track the moving energy orb smoothly to improve eye tracking.',
+      thumbnail: '🪐',
+      color: 'from-blue-600 to-indigo-600',
       locked: false,
     },
     {
       id: 'g2',
-      title: 'Depth Diver',
-      category: 'Vergence',
-      description: 'Focus in and out to strengthen binocular fusion.',
-      thumbnail: '🌊',
-      color: 'from-blue-500 to-cyan-500',
+      title: 'Jungle Jump',
+      category: 'Saccades',
+      description: 'Click the targets as they rapidly appear and disappear.',
+      thumbnail: '🐸',
+      color: 'from-green-500 to-emerald-700',
       locked: false,
     },
     {
       id: 'g3',
-      title: 'Letter Hunt',
-      category: 'Saccades',
-      description: 'Rapidly find letters to improve reading speed.',
-      thumbnail: '🅰️',
-      color: 'from-emerald-500 to-teal-500',
-      locked: true, // Example of a locked level
+      title: 'Eagle Eye',
+      category: 'Discrimination',
+      description: 'Find the unique shape hidden among the distractors.',
+      thumbnail: '🦅',
+      color: 'from-amber-500 to-orange-600',
+      locked: false,
+    },
+    {
+      id: 'g4',
+      title: 'Peripheral Defender',
+      category: 'Peripheral',
+      description: 'Keep your eyes on the center, but react to the edges.',
+      thumbnail: '🛡️',
+      color: 'from-purple-600 to-pink-600',
+      locked: false,
+    },
+    {
+      id: 'g5',
+      title: 'Memory Matrix',
+      category: 'Visual Memory',
+      description: 'Remember the pattern and recreate it.',
+      thumbnail: '🧩',
+      color: 'from-cyan-500 to-teal-500',
+      locked: false,
     }
   ],
   currentSession: null,
@@ -39,12 +56,7 @@ const therapySlice = createSlice({
   name: 'therapy',
   initialState,
   reducers: {
-    startSession: (state, action) => {
-      state.currentSession = action.payload;
-    },
-    endSession: (state) => {
-      state.currentSession = null;
-    }
+    // ... existing reducers
   },
 });
 

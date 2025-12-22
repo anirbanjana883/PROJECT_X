@@ -4,9 +4,11 @@ import { setCredentials, stopLoading } from '../redux/slices/authSlice';
 import axios from 'axios';
 
 // Create the Axios instance here so we can use it in Login/Signup pages too
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+
 export const api = axios.create({
-  baseURL: 'http://localhost:5000/api/v1', // Make sure this matches your backend PORT
-  withCredentials: true, // CRITICAL: This allows cookies to be sent/received
+  baseURL: BACKEND_URL,
+  withCredentials: true,
 });
 
 const useGetCurrentUser = () => {

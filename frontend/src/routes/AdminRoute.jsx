@@ -2,23 +2,23 @@ import { useSelector } from 'react-redux';
 import { Navigate, Outlet } from 'react-router-dom';
 import { selectUser, selectIsLoading } from '../redux/slices/authSlice';
 
-const DoctorRoute = () => {
+const AdminRoute = () => {
   const userData = useSelector(selectUser);
   const isLoading = useSelector(selectIsLoading);
 
+  // 1. CRITICAL FIX: Wait for loading to finish
+  // If we redirect while loading is true, it causes the infinite loop.
   if (isLoading) {
-    return <div className="h-screen flex items-center justify-center">Loading...</div>;
+    return null; // Or a loading spinner
   }
 
-  if (userData && userData.role === 'doctor') {
+  // 2. Check if user is Admin
+  if (userData && userData.role === 'admin') {
     return <Outlet />;
   }
 
-  if (userData && userData.role === 'patient') {
-      return <Navigate to="/patient/dashboard" replace />;
-  }
-
+  // 3. Redirect unauthorized users
   return <Navigate to="/login" replace />;
 };
 
-export default DoctorRoute;
+export default AdminRoute;
