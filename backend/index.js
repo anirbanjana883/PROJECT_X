@@ -22,7 +22,8 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
     origin: [
         'http://localhost:5173', 
-        'https://project-x-kappa-ten.vercel.app' 
+        'https://project-bld5rrzkr-anirban-janas-projects.vercel.app' 
+        
     ],
     credentials: true
 }));
