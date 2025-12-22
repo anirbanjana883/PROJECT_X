@@ -20,7 +20,10 @@ const PORT = process.env.PORT || 5000;
 
 // --- Middlewares ---
 app.use(cors({
-    origin: 'http://localhost:5173', 
+    origin: [
+        'http://localhost:5173', 
+        'https://project-x-kappa-ten.vercel.app' 
+    ],
     credentials: true
 }));
 app.use(express.json());
