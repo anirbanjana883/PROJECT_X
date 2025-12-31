@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { protect, authorizeRoles } from '../middlewares/auth.middleware';
+import { protect, authorize } from '../middlewares/auth.middleware';
 import validate from '../middlewares/validateResource';
-import { assignTherapySchema } from '../schemas/therapy.schema';
-import { assignTherapyHandler, getMyTherapyPlanHandler } from '../controllers/therapy.controller';
+import { assignTherapySchema, logSessionSchema } from '../schemas/therapy.schema';
+import { assignTherapyHandler, getHistoryHandler, getMyTherapyPlanHandler, logSessionHandler } from '../controllers/therapy.controller';
 
 const router = Router();
 
@@ -11,7 +11,7 @@ router.use(protect);
 // 2. Doctor Routes
 router.post(
   '/assign',
-  authorizeRoles('doctor'),      
+  authorize('doctor'),      
   validate(assignTherapySchema), 
   assignTherapyHandler           
 );
@@ -19,8 +19,14 @@ router.post(
 // 3. Patient Routes
 router.get(
   '/my-plan',
-  authorizeRoles('patient'),     
+  authorize('patient'),     
   getMyTherapyPlanHandler        
 );
+
+// Patient logs a game result
+router.post('/log', protect, validate(logSessionSchema), logSessionHandler);
+
+// Patient gets their progress graph
+router.get('/history', protect, getHistoryHandler);
 
 export default router;

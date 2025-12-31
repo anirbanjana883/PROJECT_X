@@ -50,7 +50,7 @@ const therapySessionSchema = new Schema<ITherapySession>(
     },
     
     // Flexible Data: Stores strictly typed JSON for game-specific analytics
-    performanceData: { type: Map, of: Schema.Types.Mixed },
+    performanceData: { type: Schema.Types.Mixed, default: {} },
     
     status: {
       type: String,

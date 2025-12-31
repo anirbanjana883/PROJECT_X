@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as therapyService from '../services/therapy.service'; // Import the Service
 import { AssignTherapyInput } from '../schemas/therapy.schema';
+import { LogSessionInput } from '../schemas/therapy.schema';
 
 export const assignTherapyHandler = async (
   req: Request<{}, {}, AssignTherapyInput>, 
@@ -23,7 +24,6 @@ export const assignTherapyHandler = async (
     }
 };
 
-
 export const getMyTherapyPlanHandler = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const patientId = (req as any).user._id;
@@ -34,6 +34,44 @@ export const getMyTherapyPlanHandler = async (req: Request, res: Response, next:
             success: true, 
             count: plan.length,
             data: plan 
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const logSessionHandler = async (
+  req: Request<{}, {}, LogSessionInput>, 
+  res: Response, 
+  next: NextFunction
+) => {
+    try {
+        const patientId = (req as any).user._id; // From Auth Middleware
+
+        const sessionLog = await therapyService.logSessionResult(patientId, req.body);
+
+        res.status(201).json({
+            success: true,
+            message: "Session logged successfully",
+            data: sessionLog
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getHistoryHandler = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const patientId = (req as any).user._id;
+        
+        const history = await therapyService.getPatientHistory(patientId);
+        
+        res.status(200).json({ 
+            success: true, 
+            count: history.length, 
+            data: history 
         });
 
     } catch (error) {

@@ -3,11 +3,12 @@ import {
     registerHandler, 
     loginHandler, 
     logoutHandler, 
-    getMeHandler 
+    getMeHandler,
+    getMyPatientsHandler 
 } from '../controllers/auth.controller';
 import validate from '../middlewares/validateResource';
 import { registerSchema, loginSchema } from '../schemas/auth.schema';
-import { protect } from '../middlewares/auth.middleware';
+import { protect, authorize } from '../middlewares/auth.middleware';
 
 const router = Router();
 
@@ -18,5 +19,8 @@ router.get('/logout', logoutHandler);
 
 // Protected Routes
 router.get('/me', protect, getMeHandler);
+
+// Add the Patient Fetch Route
+router.get('/my-patients', protect, authorize('doctor'), getMyPatientsHandler);
 
 export default router;

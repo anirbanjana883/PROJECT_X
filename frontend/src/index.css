@@ -1,83 +1,71 @@
 @import "tailwindcss";
 
-/* --- 1. Define Theme & Tailwind Animations --- */
 @theme {
-  /* Animations */
+  /* --- 1. System Animations --- */
   --animate-blob: blob 7s infinite;
   --animate-float: float 6s ease-in-out infinite;
-  --animate-glow: glow 2s ease-in-out infinite alternate;
-  --animate-shimmer: shimmer 1.5s infinite;
-
-  /* Keyframes for Tailwind */
+  --animate-pulse-slow: pulse-glow 3s infinite;
+  
   @keyframes blob {
     0% { transform: translate(0px, 0px) scale(1); }
     33% { transform: translate(30px, -50px) scale(1.1); }
     66% { transform: translate(-20px, 20px) scale(0.9); }
     100% { transform: translate(0px, 0px) scale(1); }
   }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-20px); }
-  }
-
-  @keyframes glow {
-    0% { box-shadow: 0 0 5px #3b82f6, 0 0 10px #3b82f6; }
-    100% { box-shadow: 0 0 20px #06b6d4, 0 0 30px #06b6d4; }
-  }
-
-  @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
   @keyframes pulse-glow {
-    0% {
-      opacity: 0.7;
-      transform: scale(0.95);
-      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-    }
-    70% {
-      opacity: 1;
-      transform: scale(1);
-      box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-    }
-    100% {
-      opacity: 0.7;
-      transform: scale(0.95);
-      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-    }
+    0%, 100% { box-shadow: 0 0 10px rgba(6,182,212,0.1); }
+    50% { box-shadow: 0 0 25px rgba(6,182,212,0.3); }
   }
 }
 
-/* --- 2. Dark Mode Setup --- */
 @custom-variant dark (&:where(.dark, .dark *));
 
+@layer components {
+  
+  /* --- Backgrounds: The "Deep Void" --- */
+  .app-bg {
+    @apply bg-[#f8fafc] dark:bg-[#050505] transition-colors duration-300 min-h-screen text-slate-900 dark:text-slate-100 font-sans selection:bg-cyan-500/30;
+  }
 
-/* --- 3. Base Styles --- */
-@layer base {
-  body {
-    /* Set the futuristic gradient background for the whole app */
-    @apply bg-gray-50 dark:bg-gray-900 transition-colors duration-300 ease-in-out font-sans;
+  /* --- Cards: "Dark Glass" --- */
+  .glass-card {
+    @apply bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-cyan-900/30 rounded-2xl shadow-lg dark:shadow-[0_0_30px_rgba(6,182,212,0.05)] backdrop-blur-sm transition-all duration-300;
+  }
+  
+  /* --- FIX: "Interactive Glass" (Copied styles explicitly) --- */
+  /* We repeat the base styles here because @apply cannot reference .glass-card directly */
+  .glass-card-hover {
+    @apply bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-cyan-900/30 rounded-2xl shadow-lg dark:shadow-[0_0_30px_rgba(6,182,212,0.05)] backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/50 hover:shadow-[0_0_20px_rgba(6,182,212,0.2)] hover:-translate-y-1 cursor-pointer;
+  }
+
+  /* --- Inputs: "Tech Consoles" --- */
+  .input-standard {
+    @apply w-full bg-gray-50 dark:bg-[#111111] border border-gray-300 dark:border-gray-800 rounded-xl px-4 py-3 outline-none text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-mono text-sm;
+  }
+
+  /* --- Primary Button: "The Bio-Glow" --- */
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)] hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-xs;
+  }
+
+  /* --- Secondary Button: "Stealth Mode" --- */
+  .btn-secondary {
+    @apply px-6 py-3 bg-transparent border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-400 font-bold rounded-xl hover:text-cyan-600 dark:hover:text-white hover:border-cyan-500 dark:hover:border-gray-500 transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-xs;
+  }
+
+  /* --- Text Styles --- */
+  .heading-hero {
+    @apply font-bold text-gray-900 dark:text-white tracking-tight;
+  }
+  .text-muted {
+    @apply text-gray-500 dark:text-gray-500 font-medium;
+  }
+  .badge {
+    @apply px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border;
   }
 }
 
-/* --- 4. Custom Scrollbar --- */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-900;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-blue-500/50 rounded-full hover:bg-blue-600;
-}
-
-/* --- 5. Manual Animation Classes (MUST BE OUTSIDE @THEME) --- */
-@keyframes shimmer-move {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.shimmer-effect {
-  animation: shimmer-move 1.5s infinite linear;
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { @apply bg-[#050505]; }
+::-webkit-scrollbar-thumb { @apply bg-gray-800 rounded-full hover:bg-cyan-600 transition-colors; }

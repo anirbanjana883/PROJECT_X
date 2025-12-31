@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requestAccessHandler, approveHandler, getAllUsersHandler } from '../controllers/admin.controller';
-import { protect, authorizeRoles } from '../middlewares/auth.middleware'; 
+import { protect, authorize } from '../middlewares/auth.middleware'; 
 import validate from '../middlewares/validateResource';
 import { doctorRequestSchema } from '../schemas/auth.schema'; 
 
@@ -18,7 +18,7 @@ router.post(
 router.put(
     '/approve/:userId', 
     protect, 
-    authorizeRoles('admin'), 
+    authorize('admin'), 
     approveHandler 
 );
 
@@ -26,7 +26,7 @@ router.put(
 router.get(
     '/users',
     protect,
-    authorizeRoles('admin'),
+    authorize('admin'),
     getAllUsersHandler
 );
 

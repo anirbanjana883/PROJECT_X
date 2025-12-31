@@ -1,123 +1,247 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { selectGames } from '../../../redux/slices/therapySlice';
-import { api } from '../../../hooks/useGetCurrentUser';
+import { api } from '../../../hooks/useGetCurrentUser'; // Your Axios instance
 import { toast } from 'react-toastify';
-import { FaTimes, FaTrophy, FaRedo, FaPlay } from 'react-icons/fa';
+import { 
+    FaPause, FaPlay, FaStop, FaExpand, FaCompress, FaEye, FaBrain 
+} from 'react-icons/fa';
 
-// Import Games
-import SpacePursuits from '../../../components/features/therapy/games/SpacePursuits';
-import JungleJump from '../../../components/features/therapy/games/JungleJump';
-import EagleEye from '../../../components/features/therapy/games/EagleEye';
-import PeripheralDefender from '../../../components/features/therapy/games/PeripheralDefender';
-import MemoryMatrix from '../../../components/features/therapy/games/MemoryMatrix';
+// ✅ 1. Import Registry to map "gameId" -> React Component
+import { getProtocol } from '../../../protocols/registry'; 
+import SessionReportModal from './SessionReportModal';
 
 const TherapySessionPage = () => {
-  const { id } = useParams();
+  const { id } = useParams(); // This is now the ASSIGNMENT ID (Mongo ObjectId)
   const navigate = useNavigate();
-  const games = useSelector(selectGames);
-  const gameData = games.find(g => g.id === id);
+  const containerRef = useRef(null);
 
-  // --- Game Logic ---
+  // --- State ---
+  const [assignment, setAssignment] = useState(null); // The DB Record
+  const [ActiveComponent, setActiveComponent] = useState(null); // The Game Component
+  const [loading, setLoading] = useState(true);
+  
+  // --- Game Vitals ---
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isGameOver, setIsGameOver] = useState(false);
+  const [isPaused, setIsPaused] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(300);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [accuracy, setAccuracy] = useState(100);
+  const [showReport, setShowReport] = useState(false);
 
-  // --- Timer ---
+  // 1. FETCH THE PRESCRIPTION
+  useEffect(() => {
+    const fetchAssignment = async () => {
+      try {
+        // In a real app, you'd have GET /api/therapy/assignment/:id
+        // For now, we simulate fetching the specific record:
+        // const { data } = await api.get(`/therapy/assignment/${id}`);
+        
+        // --- MOCK FETCH (Replace with real API call) ---
+        // Simulating the data structure your backend sends
+        const mockData = {
+             _id: id,
+             gameId: 'p-001', // Space Pursuits
+             gameName: 'Space Pursuits',
+             settings: {
+                 duration: 180, // Doctor set 3 mins
+                 speed: 8,      // Doctor set High Speed
+                 contrast: 100,
+                 depthEnabled: true,
+                 dichopticEnabled: false
+             },
+             clinicalNote: "Focus on smooth pursuit, not saccades."
+        };
+        // -----------------------------------------------
+
+        // 2. Load the Game Component
+        const protocolDef = getProtocol(mockData.gameId);
+        
+        if (!protocolDef) {
+            throw new Error("Game Protocol definition not found in registry.");
+        }
+
+        setAssignment(mockData);
+        setActiveComponent(() => protocolDef.component);
+        
+        // 3. Apply Doctor's Settings
+        setTimeLeft(mockData.settings.duration);
+        setLoading(false);
+
+      } catch (error) {
+        console.error("Failed to load session:", error);
+        toast.error("Could not load prescription details.");
+        navigate('/patient/dashboard');
+      }
+    };
+
+    fetchAssignment();
+  }, [id, navigate]);
+
+  // 2. TIMER LOGIC
   useEffect(() => {
     let interval;
-    if (isPlaying && timeLeft > 0) {
-      interval = setInterval(() => setTimeLeft((p) => p - 1), 1000);
-    } else if (timeLeft === 0 && isPlaying) {
-      setIsPlaying(false);
-      setIsGameOver(true);
-      saveProgress(score, 'completed');
+    if (isPlaying && !isPaused && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => {
+            if (prev <= 1) {
+                handleSessionComplete();
+                return 0;
+            }
+            return prev - 1;
+        });
+      }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isPlaying, timeLeft, score]);
+  }, [isPlaying, isPaused, timeLeft]);
 
-  // --- Save Logic ---
-  const saveProgress = async (finalScore, status) => {
-    try {
-      await api.post('/therapy/save-session', {
-        gameId: gameData.id,
-        gameName: gameData.title,
-        score: finalScore,
-        durationPlayed: 30 - timeLeft,
-        status: status
-      });
-      toast.success("Session saved!");
-    } catch (error) {
-      console.error(error);
+  // 3. HANDLERS
+  const togglePause = () => setIsPaused(!isPaused);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch(err => console.error(err));
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
     }
   };
 
-  const handleScore = () => setScore(p => p + 10);
-  
-  const handleExit = () => {
-    if (isPlaying) saveProgress(score, 'aborted');
-    navigate('/patient/dashboard');
+  const handleSessionComplete = () => {
+    setIsPlaying(false);
+    setIsPaused(true);
+    setShowReport(true); 
   };
 
-  if (!gameData) return <div>Game Not Found</div>;
-
-  // --- Render the correct Game Component ---
-  const renderGame = () => {
-    switch(gameData.id) {
-        case 'g1': return <SpacePursuits isPlaying={isPlaying} onScore={handleScore} />;
-        case 'g2': return <JungleJump isPlaying={isPlaying} onScore={handleScore} />;
-        case 'g3': return <EagleEye isPlaying={isPlaying} onScore={handleScore} />;
-        case 'g4': return <PeripheralDefender isPlaying={isPlaying} onScore={handleScore} />;
-        case 'g5': return <MemoryMatrix isPlaying={isPlaying} onScore={handleScore} />;
-        default: return <div className="text-white">Game Component Missing</div>;
-    }
+  const handleAbort = () => {
+      if(window.confirm("Abort current therapy session?")) {
+          navigate('/patient/dashboard');
+      }
   };
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  if (loading) return (
+      <div className="h-screen bg-black flex flex-col items-center justify-center text-cyan-500 font-mono">
+          <FaBrain className="animate-pulse text-4xl mb-4" />
+          <p className="tracking-[0.5em] text-sm font-bold">CALIBRATING OCULAR SENSORS...</p>
+      </div>
+  );
 
   return (
-    <div className="fixed inset-0 bg-gray-900 text-white flex flex-col z-50">
-      {/* HUD */}
-      <div className="flex justify-between items-center px-8 py-4 bg-gray-800/80 backdrop-blur-md border-b border-gray-700">
-        <div className="flex items-center gap-4">
-            <button onClick={handleExit} className="p-2 rounded-full hover:bg-gray-700"><FaTimes /></button>
-            <div>
-                <h2 className="font-bold">{gameData.title}</h2>
-                <span className="text-xs text-cyan-400 uppercase">{gameData.category}</span>
+    <div ref={containerRef} className="relative w-full h-screen bg-[#050505] overflow-hidden flex flex-col font-sans select-none">
+      
+      {/* --- HUD HEADER --- */}
+      <div className="absolute top-0 left-0 w-full z-50 px-6 py-4 flex justify-between items-start pointer-events-none">
+        
+        {/* Left: Protocol Identity */}
+        <div className="flex flex-col">
+            <h1 className="text-white font-bold text-lg tracking-widest uppercase drop-shadow-md">
+                {assignment?.gameName}
+            </h1>
+            <div className="flex items-center gap-2 text-cyan-500 text-xs font-bold font-mono">
+                <span className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></span>
+                ACTIVE PRESCRIPTION
             </div>
         </div>
-        <div className="flex gap-8 font-mono text-xl">
-            <div>SCORE: <span className="text-yellow-400">{score}</span></div>
-            <div>TIME: <span className={timeLeft < 10 ? "text-red-500 animate-pulse" : ""}>00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}</span></div>
+
+        {/* Center: Timer */}
+        <div className={`flex flex-col items-center transition-colors duration-500 ${timeLeft < 30 ? 'text-red-500' : 'text-cyan-400'}`}>
+            <div className="text-4xl font-mono font-bold tracking-wider drop-shadow-[0_0_15px_rgba(6,182,212,0.6)]">
+                {formatTime(timeLeft)}
+            </div>
+        </div>
+
+        {/* Right: Score */}
+        <div className="flex flex-col items-end text-right">
+            <div className="text-white font-mono font-bold text-xl">{score.toLocaleString()}</div>
+            <div className="text-[10px] uppercase text-gray-400 font-bold">Index</div>
         </div>
       </div>
 
-      {/* Game Container */}
-      <div className="flex-1 relative overflow-hidden flex items-center justify-center p-4">
-         {renderGame()}
+      {/* --- THE GAME CONTAINER --- */}
+      <div className="flex-1 relative flex items-center justify-center bg-black/50">
+        
+        {/* ✅ INJECTING THE CONFIG INTO THE GAME */}
+        {!isPaused && ActiveComponent ? (
+            <ActiveComponent 
+                onScore={(pts) => setScore(s => s + pts)}
+                onMiss={() => setAccuracy(a => Math.max(0, a - 2))}
+                
+                // 🔥 THE MAGIC: Passing Doctor's Settings
+                config={assignment.settings} 
+                difficulty={assignment.settings.speed} // Backwards compatibility
+            />
+        ) : null}
 
-         {/* Overlays */}
-         {!isPlaying && !isGameOver && (
-             <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
-                 <button onClick={() => setIsPlaying(true)} className="px-10 py-5 bg-blue-600 rounded-2xl font-bold text-2xl flex gap-3 items-center hover:scale-105 transition-transform">
-                    <FaPlay /> START
-                 </button>
-             </div>
-         )}
-         {isGameOver && (
-             <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
-                 <div className="bg-gray-800 p-8 rounded-3xl text-center border border-gray-700 shadow-2xl">
-                    <FaTrophy className="text-5xl text-yellow-400 mx-auto mb-4" />
-                    <h2 className="text-3xl font-bold">Complete!</h2>
-                    <p className="text-4xl font-bold mt-4 mb-8">{score} pts</p>
-                    <div className="flex gap-4">
-                        <button onClick={handleExit} className="flex-1 py-3 bg-blue-600 rounded-xl font-bold">Exit</button>
-                        <button onClick={() => window.location.reload()} className="flex-1 py-3 bg-gray-700 rounded-xl">Retry</button>
+        {/* Pause Overlay */}
+        {isPaused && !showReport && (
+            <div className="absolute inset-0 bg-black/90 backdrop-blur-md z-40 flex items-center justify-center animate-fadeIn">
+                <div className="text-center max-w-lg">
+                    <h2 className="text-white text-3xl font-bold tracking-widest uppercase mb-4">Ready to Begin?</h2>
+                    
+                    {/* Display Clinical Parameters */}
+                    <div className="grid grid-cols-2 gap-4 mb-8 text-left bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+                        <div>
+                            <span className="text-[10px] text-gray-500 uppercase font-bold block">Duration</span>
+                            <span className="text-white font-mono">{Math.floor(assignment.settings.duration/60)} Mins</span>
+                        </div>
+                        <div>
+                            <span className="text-[10px] text-gray-500 uppercase font-bold block">Intensity</span>
+                            <span className="text-cyan-400 font-mono">Level {assignment.settings.speed}</span>
+                        </div>
+                        <div className="col-span-2">
+                             <span className="text-[10px] text-gray-500 uppercase font-bold block">Doctor's Note</span>
+                             <p className="text-gray-300 text-sm italic">"{assignment.clinicalNote}"</p>
+                        </div>
                     </div>
-                 </div>
-             </div>
-         )}
+
+                    <button 
+                        onClick={() => { setIsPaused(false); setIsPlaying(true); }}
+                        className="group relative px-8 py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-lg rounded-full shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all hover:scale-110 active:scale-95 flex items-center gap-3 mx-auto"
+                    >
+                        <FaPlay /> START SESSION
+                    </button>
+                </div>
+            </div>
+        )}
       </div>
+
+      {/* --- FOOTER CONTROLS --- */}
+      <div className="absolute bottom-0 left-0 w-full z-50 px-8 py-6 flex justify-between items-center pointer-events-auto bg-gradient-to-t from-black to-transparent">
+        <div className="flex items-center gap-4">
+            <button onClick={togglePause} className="w-10 h-10 rounded-full border border-gray-600 flex items-center justify-center hover:bg-white hover:text-black transition-all">
+                {isPaused ? <FaPlay /> : <FaPause />}
+            </button>
+            <button onClick={handleAbort} className="w-10 h-10 rounded-full border border-red-900 text-red-500 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all">
+                <FaStop />
+            </button>
+        </div>
+        <button onClick={toggleFullscreen} className="text-gray-400 hover:text-white">
+            {isFullscreen ? <FaCompress /> : <FaExpand />}
+        </button>
+      </div>
+
+      {/* Grid Overlay */}
+      <div className="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(6,182,212,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(6,182,212,0.1)_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
+
+      {/* REPORT MODAL */}
+      <SessionReportModal 
+          isOpen={showReport}
+          onClose={() => setShowReport(false)}
+          data={{
+              protocolName: assignment?.gameName,
+              score: score,
+              accuracy: accuracy,
+              duration: assignment.settings.duration - timeLeft
+          }}
+      />
+
     </div>
   );
 };

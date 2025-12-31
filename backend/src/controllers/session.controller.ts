@@ -2,9 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as sessionService from '../services/session.service';
 import { SaveSessionInput } from '../schemas/session.schema';
 
-// @desc    Save a game session result
-// @route   POST /api/v1/sessions/save
-// @access  Patient Only
+
 export const saveSessionHandler = async (
     req: Request<{}, {}, SaveSessionInput>, 
     res: Response, 
@@ -29,9 +27,6 @@ export const saveSessionHandler = async (
     }
 };
 
-// @desc    Get history of played sessions
-// @route   GET /api/v1/sessions/history
-// @access  Patient Only
 export const getSessionHistoryHandler = async (
     req: Request, 
     res: Response, 

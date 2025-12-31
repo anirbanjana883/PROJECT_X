@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { createUser, validatePassword, findUserById } from '../services/auth.service';
 import { RegisterInput, LoginInput } from '../schemas/auth.schema';
+import User from '../models/user.model';
 
 //  Sign JWT Token 
 const signToken = (id: string, role: string) => {
@@ -90,4 +91,33 @@ export const getMeHandler = async (req: Request, res: Response, next: NextFuncti
     } catch (error) {
         next(error);
     }
+};
+
+export const getMyPatientsHandler = async (
+  req: Request, 
+  res: Response, 
+  next: NextFunction
+) => {
+  try {
+    // 1. Get the logged-in Doctor's ID
+    const doctorId = (req as any).user._id;
+
+    // 2. Find Users who have this doctor assigned
+    const patients = await User.find({ 
+        assignedDoctor: doctorId,
+        role: 'patient' // Optional safety check
+    })
+    .select('-password -__v') // Don't send passwords
+    .sort({ createdAt: -1 });
+
+    // 3. Send Response
+    res.status(200).json({
+      success: true,
+      count: patients.length,
+      data: patients
+    });
+
+  } catch (error) {
+    next(error);
+  }
 };
