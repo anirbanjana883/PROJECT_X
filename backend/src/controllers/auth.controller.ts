@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { createUser, validatePassword, findUserById } from '../services/auth.service';
+import { createUser, validatePassword, findUserById, getPendingPatients, assignPatientToDoctor, getDoctorRoster } from '../services/auth.service';
 import { RegisterInput, LoginInput } from '../schemas/auth.schema';
 import User from '../models/user.model';
 
@@ -93,24 +93,13 @@ export const getMeHandler = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
-export const getMyPatientsHandler = async (
-  req: Request, 
-  res: Response, 
-  next: NextFunction
-) => {
+//  GET ACTIVE ROSTER (My Patients)
+export const getMyPatientsHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // 1. Get the logged-in Doctor's ID
     const doctorId = (req as any).user._id;
 
-    // 2. Find Users who have this doctor assigned
-    const patients = await User.find({ 
-        assignedDoctor: doctorId,
-        role: 'patient' // Optional safety check
-    })
-    .select('-password -__v') // Don't send passwords
-    .sort({ createdAt: -1 });
+    const patients = await getDoctorRoster(doctorId);
 
-    // 3. Send Response
     res.status(200).json({
       success: true,
       count: patients.length,
@@ -121,3 +110,55 @@ export const getMyPatientsHandler = async (
     next(error);
   }
 };
+
+// 1. GET THE QUEUE
+export const getIntakeQueueHandler = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const queue = await getPendingPatients();
+
+    res.status(200).json({
+      success: true,
+      count: queue.length,
+      data: queue
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 2. CLAIM PATIENT
+export const claimPatientHandler = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const doctorId = (req as any).user._id;
+    const { patientId } = req.body;
+
+    const updatedPatient = await assignPatientToDoctor(patientId, doctorId);
+
+    res.status(200).json({
+      success: true,
+      message: `Success! You are now treating ${updatedPatient.name}.`,
+      data: updatedPatient
+    });
+
+  } catch (error: any) {
+    // Handle specific service errors
+    if (error.message === 'Patient not found') {
+        return res.status(404).json({ success: false, message: error.message });
+    }
+    if (error.message === 'Patient already claimed by another doctor') {
+        return res.status(409).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
+
+
+
+// New User Registers -> Lands in getIntakeQueueHandler.
+
+// Doctor checks Queue -> Calls claimPatientHandler.
+
+// System updates User -> Sets assignedDoctor = DoctorID.
+
+// Doctor goes to Dashboard -> Calls getMyPatientsHandler (which now finds that user).

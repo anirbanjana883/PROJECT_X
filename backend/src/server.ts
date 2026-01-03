@@ -10,6 +10,7 @@ import logger from './utils/logger';
 import authRouter from './routes/auth.routes';
 import adminRouter from './routes/admin.routes';
 import therapyRouter from './routes/therapy.routes';
+import userRouter from './routes/user.routes';
 
 
 dotenv.config();
@@ -41,6 +42,7 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/v1/auth', authRouter);  
 app.use('/api/v1/admin', adminRouter); 
 app.use('/api/v1/therapy', therapyRouter);
+app.use('/api/v1/users', userRouter);
 
 //  Global Error Handler
 

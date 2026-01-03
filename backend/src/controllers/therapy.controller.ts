@@ -1,14 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
-import * as therapyService from '../services/therapy.service'; // Import the Service
-import { AssignTherapyInput } from '../schemas/therapy.schema';
-import { LogSessionInput } from '../schemas/therapy.schema';
+import * as therapyService from '../services/therapy.service';
+import { AssignTherapyInput, LogSessionInput } from '../schemas/therapy.schema';
 
+// --- Doctor: Assign Therapy ---
 export const assignTherapyHandler = async (
   req: Request<{}, {}, AssignTherapyInput>, 
   res: Response, 
   next: NextFunction
 ) => {
     try {
+        // Assuming your auth middleware populates user
         const doctorId = (req as any).user._id;
 
         const assignment = await therapyService.assignTherapy(doctorId, req.body);
@@ -24,7 +25,12 @@ export const assignTherapyHandler = async (
     }
 };
 
-export const getMyTherapyPlanHandler = async (req: Request, res: Response, next: NextFunction) => {
+// --- Patient: Get My Plan ---
+export const getMyTherapyPlanHandler = async (
+  req: Request, 
+  res: Response, 
+  next: NextFunction
+) => {
     try {
         const patientId = (req as any).user._id;
 
@@ -41,13 +47,14 @@ export const getMyTherapyPlanHandler = async (req: Request, res: Response, next:
     }
 };
 
+// --- Patient: Save Game Result ---
 export const logSessionHandler = async (
   req: Request<{}, {}, LogSessionInput>, 
   res: Response, 
   next: NextFunction
 ) => {
     try {
-        const patientId = (req as any).user._id; // From Auth Middleware
+        const patientId = (req as any).user._id;
 
         const sessionLog = await therapyService.logSessionResult(patientId, req.body);
 
@@ -62,7 +69,12 @@ export const logSessionHandler = async (
     }
 };
 
-export const getHistoryHandler = async (req: Request, res: Response, next: NextFunction) => {
+// --- Patient: Get History ---
+export const getHistoryHandler = async (
+  req: Request, 
+  res: Response, 
+  next: NextFunction
+) => {
     try {
         const patientId = (req as any).user._id;
         

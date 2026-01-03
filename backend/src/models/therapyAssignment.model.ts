@@ -66,7 +66,10 @@ const therapyAssignmentSchema = new Schema<ITherapyAssignment>(
 );
 
 // unique assignment for 
-therapyAssignmentSchema.index({ patientId: 1, gameId: 1, isActive: 1 }, { unique: true });
+therapyAssignmentSchema.index(
+  { patientId: 1, gameId: 1 }, 
+  { unique: true, partialFilterExpression: { isActive: true } }
+);
 
 const TherapyAssignment = mongoose.model<ITherapyAssignment>('TherapyAssignment', therapyAssignmentSchema);
 export default TherapyAssignment;
