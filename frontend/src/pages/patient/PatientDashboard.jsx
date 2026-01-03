@@ -5,6 +5,7 @@ import { selectUser } from "../../redux/slices/authSlice";
 import { useTherapyPlan } from "../../hooks/useTherapyPlan";
 import { usePatientHistory } from "../../hooks/usePatientHistory";
 import ActivityGraph from "../../components/features/therapy/ActivityGraph";
+import TriageForm from "../../components/features/patient/TriageForm";
 
 import {
   FaPlay,
@@ -26,12 +27,17 @@ const GAME_ASSETS = {
 const PatientDashboard = () => {
   const user = useSelector(selectUser);
   const navigate = useNavigate();
-
-  // fetch prescription
   const { plan } = useTherapyPlan(user?._id);
-
-  // Fetch Real Performance History
   const { history, stats, loading } = usePatientHistory(user?._id);
+
+  if (!user.assignedDoctor) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white p-6">
+        {/* Show the Waiting Room Form */}
+        <TriageForm user={user} />
+      </div>
+    );
+  }
 
   if (loading)
     return (
@@ -108,8 +114,13 @@ const PatientDashboard = () => {
                     key={assignment._id}
                     className="group relative bg-gray-900/40 border border-gray-800 hover:border-cyan-500/50 hover:bg-gray-900/60 transition-all rounded-2xl p-6 overflow-hidden cursor-pointer shadow-lg"
                     onClick={() =>
-                      navigate(`/therapy/session/${assignment._id}`)
-                    } // Pass Assignment ID!
+                      navigate(`/therapy/session/${assignment._id}`, {
+                        // 🔥 CRITICAL FIX: Pass the assignment object in 'state'
+                        state: {
+                          assignmentData: assignment,
+                        },
+                      })
+                    }
                   >
                     {/* Glow Effect */}
                     <div

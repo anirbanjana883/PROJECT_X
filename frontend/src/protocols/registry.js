@@ -1,26 +1,39 @@
 import SpacePursuits from './neuro-ophthalmology/SpacePursuits';
-// import MemoryGrid from './cognitive/MemoryGrid'; 
+import JungleJump from '../components/features/therapy/games/JungleJump';
+import EagleEye from '../components/features/therapy/games/EagleEye';
+import MemoryMatrix from '../components/features/therapy/games/MemoryMatrix';
+import PeripheralDefender from '../components/features/therapy/games/PeripheralDefender';
 
 export const CLINICAL_PROTOCOLS = {
   'p-001': {
     id: 'p-001',
-    name: 'Oculomotor Tracking (3D)',
-    category: 'Neuro-Ophthalmology',
-    description: 'Trains smooth pursuit capabilities using depth-perception stimuli.',
-    component: SpacePursuits, // The actual code
-    clinicalTags: ['Amblyopia', 'Vergence', 'Focus'],
-    defaultDuration: 300,
-    thumbnail: '🪐' // Replace with a medical icon later
+    name: 'Space Pursuits',
+    component: SpacePursuits, 
+    type: 'canvas', 
   },
   'p-002': {
     id: 'p-002',
-    name: 'Saccadic Precision Matrix',
-    category: 'Oculomotor',
-    description: 'Rapid eye movement training for reading speed and fixation.',
-    component: null, // Placeholder for now
-    clinicalTags: ['Reading', 'Fixation'],
-    defaultDuration: 180,
-    thumbnail: '🎯'
+    name: 'Jungle Jump',
+    component: JungleJump,
+    type: 'dom', 
+  },
+  'p-003': {
+    id: 'p-003',
+    name: 'Eagle Eye',
+    component: EagleEye,
+    type: 'dom',
+  },
+  'p-004': {
+    id: 'p-004',
+    name: 'Peripheral Defender',
+    component: PeripheralDefender,
+    type: 'dom',
+  },
+  'p-005': {
+    id: 'p-005',
+    name: 'Memory Matrix',
+    component: MemoryMatrix,
+    type: 'dom',
   }
 };
 

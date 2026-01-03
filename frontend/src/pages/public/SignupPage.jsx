@@ -24,7 +24,7 @@ const SignupPage = () => {
 
     try {
       // Register call
-      const { data } = await api.post('/auth/signup', formData);
+      const { data } = await api.post('/auth/register', formData);
       
       // Auto-login after signup
       dispatch(setCredentials(data));
