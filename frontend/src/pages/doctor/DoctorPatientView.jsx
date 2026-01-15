@@ -2,46 +2,52 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
     FaUserInjured, FaArrowLeft, FaChartLine, FaClipboardList, 
-    FaPrescriptionBottleAlt, FaHistory, FaTrophy, FaBolt, FaPlay 
+    FaPrescriptionBottleAlt, FaTrophy, FaBolt, FaPlay 
 } from 'react-icons/fa';
 
 // --- COMPONENTS ---
 import ActivityGraph from '../../components/features/therapy/ActivityGraph'; 
-import TherapyPieChart from '../../components/features/therapy/TherapyPieChart'; 
 import PatientDetailsCard from '../../components/features/doctor/PatientDetailsCard'; 
 import GameSettingsModal from '../../components/features/therapy/GameSettingsModal';
 
-// ✅ IMPORT THE HOOKS (Reuse logic!)
+// --- HOOKS ---
 import { usePatientHistory } from '../../hooks/usePatientHistory';
-import { api } from '../../hooks/useGetCurrentUser'; // To fetch patient details
+import { api } from '../../hooks/useGetCurrentUser'; 
+
+// --- REGISTRY (THE FIX) ---
+// We import the centralized list instead of hardcoding 'p-001'
+import { getAllProtocols } from '../../protocols/registry.js'; 
 
 const DoctorPatientView = () => {
-  const { patientId } = useParams(); // URL param: /doctor/patient/:patientId
+  const { patientId } = useParams(); 
   const navigate = useNavigate();
 
   // --- STATE ---
   const [activeTab, setActiveTab] = useState('overview'); 
   const [patient, setPatient] = useState(null);
   
-  // ✅ USE THE HOOK FOR REAL GRAPHS
+  // Real Data Hooks
   const { history, stats, loading: historyLoading } = usePatientHistory(patientId);
 
-  // --- MODAL STATE ---
+  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState(null);
 
-  // --- FETCH PATIENT DETAILS (Name, Age, etc.) ---
+  // --- 1. LOAD PROTOCOLS FROM REGISTRY ---
+  // This ensures IDs match 'space-pursuits', 'memory-matrix', etc.
+  const availableProtocols = getAllProtocols();
+
+  // --- FETCH PATIENT DETAILS ---
   useEffect(() => {
     const fetchPatientDetails = async () => {
         try {
-            // Assuming you have an endpoint for single user details
             const { data } = await api.get(`/users/${patientId}`);
             setPatient(data); 
         } catch (error) {
             console.error("Failed to load patient details", error);
-            // Fallback for demo if API fails
+            // Fallback for dev/demo
             setPatient({ 
-                name: "Unknown Patient", 
+                name: "Loading...", 
                 condition: "Unknown", 
                 id: patientId 
             });
@@ -49,13 +55,6 @@ const DoctorPatientView = () => {
     };
     fetchPatientDetails();
   }, [patientId]);
-
-  // --- MOCK PROTOCOLS (These remain static library items) ---
-  const availableProtocols = [
-    { id: 'p-001', title: 'Space Pursuits', category: 'Neuro-Ophthalmology', description: '3D Depth tracking.', thumbnail: '🪐' },
-    { id: 'p-002', title: 'Jungle Jump', category: 'Saccadic Training', description: 'Rapid eye movement.', thumbnail: '🐸' },
-    { id: 'p-003', title: 'Eagle Eye', category: 'Visual Discrimination', description: 'Contrast sensitivity.', thumbnail: '🦅' },
-  ];
 
   const openPrescriptionModal = (game) => {
       setSelectedGame(game);
@@ -92,7 +91,6 @@ const DoctorPatientView = () => {
                 </div>
             </div>
             
-            {/* ✅ REAL STATS from the Hook */}
             <div className="hidden md:flex gap-4">
                  <StatBadge icon={<FaTrophy className="text-yellow-500" />} label="Total Sessions" value={stats.totalSessions} />
                  <StatBadge icon={<FaBolt className="text-cyan-500" />} label="Avg Accuracy" value={`${stats.avgAccuracy}%`} />
@@ -118,7 +116,6 @@ const DoctorPatientView = () => {
                         <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-6 flex items-center gap-2">
                             <FaChartLine className="text-cyan-500" /> Performance Trajectory
                         </h3>
-                        {/* ✅ REAL DATA GRAPH */}
                         <div className="h-64 w-full">
                             {history.length > 0 ? (
                                 <ActivityGraph data={history} />
@@ -127,7 +124,6 @@ const DoctorPatientView = () => {
                             )}
                         </div>
                     </div>
-                    {/* ... (Pie chart can stay static or be connected similarly) ... */}
                 </div>
                 <div className="xl:col-span-1">
                     <PatientDetailsCard patient={patient} />
@@ -135,7 +131,7 @@ const DoctorPatientView = () => {
             </div>
         )}
 
-        {/* === TAB 2: PRESCRIBE === */}
+        {/* === TAB 2: PRESCRIBE (THE UPDATED LIBRARY) === */}
         {activeTab === 'prescribe' && (
             <div className="animate-fadeIn">
                 <div className="bg-[#050505] border border-gray-800 rounded-2xl p-8">
@@ -146,7 +142,7 @@ const DoctorPatientView = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {availableProtocols.map((protocol) => (
                             <div 
-                                key={protocol.id} 
+                                key={protocol.id} // NOW CORRECT: 'space-pursuits'
                                 className="group bg-gray-900/30 border border-gray-800 rounded-xl p-6 hover:border-cyan-500/50 hover:bg-gray-900/50 transition-all cursor-pointer flex flex-col"
                                 onClick={() => openPrescriptionModal(protocol)}
                             >
@@ -156,10 +152,17 @@ const DoctorPatientView = () => {
                                         <FaPlay size={12} />
                                     </div>
                                 </div>
-                                <h3 className="text-lg font-bold text-white mb-1 group-hover:text-cyan-400 transition-colors">{protocol.title}</h3>
-                                <p className="text-[10px] text-cyan-600 font-bold uppercase tracking-wider mb-3">{protocol.category}</p>
+                                <h3 className="text-lg font-bold text-white mb-1 group-hover:text-cyan-400 transition-colors">
+                                    {protocol.name} {/* Registry uses 'name', not 'title' */}
+                                </h3>
+                                <p className="text-[10px] text-cyan-600 font-bold uppercase tracking-wider mb-3">
+                                    {protocol.category}
+                                </p>
+                                <p className="text-xs text-gray-500 mb-4 line-clamp-2">
+                                    {protocol.description}
+                                </p>
                                 
-                                <button className="w-full mt-4 py-2 rounded-lg bg-gray-800 text-gray-400 text-xs font-bold uppercase tracking-wider group-hover:bg-cyan-600 group-hover:text-white transition-all">
+                                <button className="w-full mt-auto py-2 rounded-lg bg-gray-800 text-gray-400 text-xs font-bold uppercase tracking-wider group-hover:bg-cyan-600 group-hover:text-white transition-all">
                                     Configure & Assign
                                 </button>
                             </div>
@@ -182,7 +185,6 @@ const DoctorPatientView = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-800">
-                        {/* ✅ REAL DATA ROWS */}
                         {history.map((log, i) => (
                             <tr key={i} className="hover:bg-gray-900/30">
                                 <td className="px-6 py-4 text-gray-300 font-mono text-xs">{log.date}</td>
@@ -221,7 +223,7 @@ const DoctorPatientView = () => {
   );
 };
 
-// ... Helper Components (TabButton, StatBadge) remain the same ...
+// ... Helper Components ...
 const TabButton = ({ active, onClick, icon, label }) => (
     <button onClick={onClick} className={`pb-4 px-2 flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition-all border-b-2 ${active ? 'text-cyan-500 border-cyan-500' : 'text-gray-500 border-transparent hover:text-gray-300'}`}>
         {icon} <span className="hidden sm:inline">{label}</span>

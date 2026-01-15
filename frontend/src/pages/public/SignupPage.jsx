@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../../redux/slices/authSlice';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast'; // <--- NEW IMPORT
 import { api } from '../../hooks/useGetCurrentUser';
 import AuthLayout from '../../components/layout/AuthLayout';
-import { FaUser, FaEnvelope, FaLock, FaSpinner } from 'react-icons/fa';
+import AuthInput from '../../components/ui/AuthInput';
+import GoogleButton from '../../components/ui/GoogleButton';
+import { FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
-  
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -18,112 +19,101 @@ const SignupPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:5000/api/v1/auth/google";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      // Register call
-      const { data } = await api.post('/auth/register', formData);
-      
-      // Auto-login after signup
-      dispatch(setCredentials(data));
-      
-      toast.success('Account created successfully!');
-      navigate('/patient/dashboard');
+    const signupPromise = api.post('/auth/register', formData);
 
-    } catch (error) {
-      const message = error.response?.data?.message || 'Signup failed';
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
+    toast.promise(signupPromise, {
+      loading: 'Creating your account...',
+      success: (response) => {
+        const { data } = response;
+        dispatch(setCredentials(data));
+        
+        setTimeout(() => {
+             navigate('/patient/dashboard');
+        }, 500);
+
+        return 'Account created successfully!';
+      },
+      error: (err) => {
+        setLoading(false);
+        return err.response?.data?.message || 'Registration failed';
+      },
+    });
   };
 
   return (
     <AuthLayout 
       title="Create Account" 
-      subtitle="Start your journey to better vision today"
+      subtitle="Join the vision therapy platform"
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
-        
-        {/* Name Input */}
+       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaUser className="text-gray-400" />
-            </div>
-            <input
-              type="text"
-              name="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-              placeholder="John Doe"
-            />
-          </div>
+           <GoogleButton onClick={handleGoogleLogin} text="Sign up with Google" />
+           <div className="relative flex py-5 items-center">
+             <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+             <span className="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase tracking-wider font-semibold">Or sign up with email</span>
+             <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+           </div>
         </div>
 
-        {/* Email Input */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaEnvelope className="text-gray-400" />
-            </div>
-            <input
-              type="email"
-              name="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-              placeholder="you@example.com"
-            />
-          </div>
-        </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <AuthInput 
+            label="Full Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="John Doe"
+            icon={FaUser}
+          />
 
-        {/* Password Input */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaLock className="text-gray-400" />
-            </div>
-            <input
-              type="password"
-              name="password"
-              required
-              minLength={6}
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-              placeholder="Create a password (min 6 chars)"
-            />
-          </div>
-        </div>
+          <AuthInput 
+            label="Email Address"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="you@example.com"
+            icon={FaEnvelope}
+          />
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full flex justify-center items-center bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          {loading ? <FaSpinner className="animate-spin mr-2" /> : null}
-          {loading ? 'Creating Account...' : 'Sign Up'}
-        </button>
+          <AuthInput 
+            label="Password"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="Min 6 characters"
+            icon={FaLock}
+            minLength={6}
+          />
 
-        {/* Footer Link */}
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex justify-center items-center bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-600/40 disabled:opacity-70 disabled:cursor-not-allowed transform active:scale-[0.99]"
+          >
+            {loading ? 'Creating Account...' : 'Sign Up'}
+          </button>
+          
+           <p className="text-xs text-center text-gray-500 mt-4 px-4">
+            By creating an account, you agree to our <span className="underline cursor-pointer">Terms of Service</span> and <span className="underline cursor-pointer">Privacy Policy</span>.
+          </p>
+        </form>
+
+        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">
           Already have an account?{' '}
-          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
+          <Link to="/login" className="font-bold text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
             Log in
           </Link>
         </p>
-
-      </form>
+      </div>
     </AuthLayout>
   );
 };

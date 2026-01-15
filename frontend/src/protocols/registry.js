@@ -1,41 +1,55 @@
 import SpacePursuits from './neuro-ophthalmology/SpacePursuits';
-import JungleJump from '../components/features/therapy/games/JungleJump';
-import EagleEye from '../components/features/therapy/games/EagleEye';
-import MemoryMatrix from '../components/features/therapy/games/MemoryMatrix';
-import PeripheralDefender from '../components/features/therapy/games/PeripheralDefender';
+import MemoryMatrix from './cognitive/MemoryMatrix';
+import EagleEye from './vision/EagleEye';
+import PeripheralDefender from './vision/PeripheralDefender';
+import JungleJump from './saccadic/JungleJump';
 
-export const CLINICAL_PROTOCOLS = {
-  'p-001': {
-    id: 'p-001',
-    name: 'Space Pursuits',
-    component: SpacePursuits, 
-    type: 'canvas', 
+export const ProtocolRegistry = {
+  "space-pursuits": {
+    id: "space-pursuits",
+    name: "Space Pursuits",
+    component: SpacePursuits,
+    category: "Neuro-Ophthalmology",
+    description: "Trains smooth pursuit capabilities using depth-perception stimuli.",
+    thumbnail: '🪐'
   },
-  'p-002': {
-    id: 'p-002',
-    name: 'Jungle Jump',
-    component: JungleJump,
-    type: 'dom', 
-  },
-  'p-003': {
-    id: 'p-003',
-    name: 'Eagle Eye',
-    component: EagleEye,
-    type: 'dom',
-  },
-  'p-004': {
-    id: 'p-004',
-    name: 'Peripheral Defender',
-    component: PeripheralDefender,
-    type: 'dom',
-  },
-  'p-005': {
-    id: 'p-005',
-    name: 'Memory Matrix',
+  "memory-matrix": {
+    id: "memory-matrix",
+    name: "Memory Matrix",
     component: MemoryMatrix,
-    type: 'dom',
+    category: "Cognitive",
+    description: "Visual working memory training using grid recall tasks.",
+    thumbnail: '🧠'
+  },
+  "eagle-eye": {
+    id: "eagle-eye",
+    name: "Eagle Eye",
+    component: EagleEye,
+    category: "Visual Discrimination",
+    description: "Visual search task to train figure-ground discrimination.",
+    thumbnail: '🦅'
+  },
+  "peripheral-defender": {
+    id: "peripheral-defender",
+    name: "Peripheral Defender",
+    component: PeripheralDefender,
+    category: "Visual Field",
+    description: "Expands field of view by forcing central fixation while tracking periphery.",
+    thumbnail: '👁️'
+  },
+  "jungle-jump": {
+    id: "jungle-jump",
+    name: "Jungle Jump",
+    component: JungleJump,
+    category: "Reaction Time",
+    description: "Gamified saccadic training requiring rapid motor response.",
+    thumbnail: '🐸'
   }
 };
 
-export const getProtocol = (id) => CLINICAL_PROTOCOLS[id];
-export const getAllProtocols = () => Object.values(CLINICAL_PROTOCOLS);
+export const getGameComponent = (gameId) => {
+  const protocol = ProtocolRegistry[gameId];
+  return protocol ? protocol.component : null;
+};
+
+export const getAllProtocols = () => Object.values(ProtocolRegistry);

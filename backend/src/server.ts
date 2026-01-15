@@ -11,6 +11,7 @@ import authRouter from './routes/auth.routes';
 import adminRouter from './routes/admin.routes';
 import therapyRouter from './routes/therapy.routes';
 import userRouter from './routes/user.routes';
+import passport from './config/passport';
 
 
 dotenv.config();
@@ -32,6 +33,8 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10kb' })); 
 app.use(cookieParser());
+
+app.use(passport.initialize());
 
 //  API Routes
 app.get('/', (req: Request, res: Response) => {

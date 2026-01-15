@@ -1,208 +1,113 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom'; 
-import { toast } from 'react-toastify';
-import { FaPause, FaPlay, FaStop, FaExpand, FaCompress, FaBrain } from 'react-icons/fa';
-import { getProtocol } from '../../../protocols/registry'; 
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { FaBolt, FaArrowLeft } from 'react-icons/fa';
+import { useTherapyPlan } from '../../../hooks/useTherapyPlan';
+import { useGetCurrentUser } from '../../../hooks/useGetCurrentUser'; 
+import { getGameComponent } from '../../../protocols/registry'; 
 import SessionReportModal from './SessionReportModal';
 
 const TherapySessionPage = () => {
-  const { id } = useParams(); 
+  const { sessionId } = useParams(); 
   const navigate = useNavigate();
-  const location = useLocation(); // <--- Access the passed state
-  const containerRef = useRef(null);
-
-  const [assignment, setAssignment] = useState(null);
-  const [ActiveComponent, setActiveComponent] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { currentUser } = useGetCurrentUser();
+  const { plan, loading } = useTherapyPlan(currentUser?._id);
   
-  // Game Vitals
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isPaused, setIsPaused] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(0);
   const [score, setScore] = useState(0);
-  const [accuracy, setAccuracy] = useState(100);
   const [showReport, setShowReport] = useState(false);
 
-  // 1. INITIALIZE SESSION
+  // --- DEBUG LOGS (Optional: Remove later) ---
   useEffect(() => {
-    // Check if we have data passed from Dashboard
-    if (!location.state?.assignmentData) {
-        toast.error("Session missing configuration. Returning to dashboard.");
-        navigate('/patient/dashboard');
-        return;
+    if (!loading && plan) {
+        console.log("Searching for:", sessionId);
+        console.log("In Plan:", plan);
     }
+  }, [loading, plan, sessionId]);
 
-    const data = location.state.assignmentData;
-    
-    // Look up the Game Component
-    const protocolDef = getProtocol(data.gameId);
-    
-    if (!protocolDef) {
-        toast.error("Game module not found.");
-        navigate('/patient/dashboard');
-        return;
-    }
+  // --- FIX: ROBUST LOOKUP ---
+  // We check if the URL param matches the 'gameId' (space-pursuits) OR the '_id' (6958...)
+  const currentAssignment = plan?.find(p => p.gameId === sessionId || p._id === sessionId);
 
-    // Set State
-    setAssignment(data);
-    setActiveComponent(() => protocolDef.component);
-    setTimeLeft(data.settings?.duration || 300); // Default 5 mins if missing
-    setLoading(false);
+  // Load Component
+  const GameComponent = currentAssignment ? getGameComponent(currentAssignment.gameId) : null;
 
-  }, [id, navigate, location]);
+  const handleScore = (points) => setScore(s => s + points);
+  const handleMiss = () => { /* optional sound effect */ };
 
-  // 2. TIMER LOGIC
-  useEffect(() => {
-    let interval;
-    if (isPlaying && !isPaused && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => {
-            if (prev <= 1) {
-                handleSessionComplete();
-                return 0;
-            }
-            return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying, isPaused, timeLeft]);
-
-  const togglePause = () => setIsPaused(!isPaused);
-  
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-        containerRef.current.requestFullscreen().catch(err => console.error(err));
-        setIsFullscreen(true);
-    } else {
-        document.exitFullscreen();
-        setIsFullscreen(false);
-    }
-  };
-
-  const handleSessionComplete = () => {
-    setIsPlaying(false);
-    setIsPaused(true);
-    setShowReport(true); 
-  };
-
-  const handleAbort = () => {
-      if(window.confirm("Abort current therapy session? Progress will be lost.")) {
-          navigate('/patient/dashboard');
-      }
-  };
-
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
-  };
-
+  // --- LOADING ---
   if (loading) return (
-      <div className="h-screen bg-black flex flex-col items-center justify-center text-cyan-500 font-mono">
-          <FaBrain className="animate-pulse text-4xl mb-4" />
-          <p className="tracking-[0.5em] text-sm font-bold">LOADING NEURAL CONFIG...</p>
-      </div>
+    <div className="h-screen bg-black flex flex-col items-center justify-center text-cyan-500 font-mono">
+        <div className="animate-spin text-4xl mb-4"><FaBolt /></div>
+        <p className="animate-pulse tracking-widest text-sm">LOADING PROTOCOL...</p>
+    </div>
   );
 
-  return (
-    <div ref={containerRef} className="relative w-full h-screen bg-[#050505] overflow-hidden flex flex-col font-sans select-none">
-      
-      {/* --- HUD HEADER --- */}
-      <div className="absolute top-0 left-0 w-full z-50 px-6 py-4 flex justify-between items-start pointer-events-none">
-        <div className="flex flex-col">
-            <h1 className="text-white font-bold text-lg tracking-widest uppercase drop-shadow-md">
-                {assignment?.gameName}
-            </h1>
-            <div className="flex items-center gap-2 text-cyan-500 text-xs font-bold font-mono">
-                <span className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></span>
-                ACTIVE PRESCRIPTION
-            </div>
-        </div>
-        <div className={`flex flex-col items-center transition-colors duration-500 ${timeLeft < 30 ? 'text-red-500' : 'text-cyan-400'}`}>
-            <div className="text-4xl font-mono font-bold tracking-wider drop-shadow-[0_0_15px_rgba(6,182,212,0.6)]">
-                {formatTime(timeLeft)}
-            </div>
-        </div>
-        <div className="flex flex-col items-end text-right">
-            <div className="text-white font-mono font-bold text-xl">{score.toLocaleString()}</div>
-            <div className="text-[10px] uppercase text-gray-400 font-bold">Index</div>
-        </div>
-      </div>
-
-      {/* --- THE GAME CONTAINER --- */}
-      <div className="flex-1 relative flex items-center justify-center bg-black/50">
-        {!isPaused && ActiveComponent ? (
-            <ActiveComponent 
-                isPlaying={!isPaused}
-                onScore={(pts = 10) => setScore(s => s + pts)}
-                onMiss={() => setAccuracy(a => Math.max(0, a - 5))}
-                
-                // Pass Settings
-                config={assignment.settings} 
-                difficulty={assignment.settings.speed} 
-            />
-        ) : null}
-
-        {/* Pause Overlay */}
-        {isPaused && !showReport && (
-            <div className="absolute inset-0 bg-black/90 backdrop-blur-md z-40 flex items-center justify-center animate-fadeIn">
-                <div className="text-center max-w-lg">
-                    <h2 className="text-white text-3xl font-bold tracking-widest uppercase mb-4">Ready to Begin?</h2>
-                    <div className="grid grid-cols-2 gap-4 mb-8 text-left bg-gray-900/50 p-6 rounded-xl border border-gray-800">
-                        <div>
-                            <span className="text-[10px] text-gray-500 uppercase font-bold block">Duration</span>
-                            <span className="text-white font-mono">{Math.floor(assignment.settings.duration/60)} Mins</span>
-                        </div>
-                        <div>
-                            <span className="text-[10px] text-gray-500 uppercase font-bold block">Intensity</span>
-                            <span className="text-cyan-400 font-mono">Level {assignment.settings.speed}</span>
-                        </div>
-                        <div className="col-span-2">
-                             <span className="text-[10px] text-gray-500 uppercase font-bold block">Doctor's Note</span>
-                             <p className="text-gray-300 text-sm italic">"{assignment.clinicalNote}"</p>
-                        </div>
-                    </div>
-                    <button 
-                        onClick={() => { setIsPaused(false); setIsPlaying(true); }}
-                        className="group relative px-8 py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-lg rounded-full shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all hover:scale-110 active:scale-95 flex items-center gap-3 mx-auto"
-                    >
-                        <FaPlay /> START SESSION
-                    </button>
-                </div>
-            </div>
-        )}
-      </div>
-
-      {/* --- FOOTER CONTROLS --- */}
-      <div className="absolute bottom-0 left-0 w-full z-50 px-8 py-6 flex justify-between items-center pointer-events-auto bg-gradient-to-t from-black to-transparent">
-        <div className="flex items-center gap-4">
-            <button onClick={togglePause} className="w-10 h-10 rounded-full border border-gray-600 flex items-center justify-center hover:bg-white hover:text-black transition-all">
-                {isPaused ? <FaPlay /> : <FaPause />}
-            </button>
-            <button onClick={handleAbort} className="w-10 h-10 rounded-full border border-red-900 text-red-500 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all">
-                <FaStop />
-            </button>
-        </div>
-        <button onClick={toggleFullscreen} className="text-gray-400 hover:text-white">
-            {isFullscreen ? <FaCompress /> : <FaExpand />}
+  // --- ERROR STATE ---
+  if (!currentAssignment || !GameComponent) return (
+    <div className="h-screen bg-black flex flex-col items-center justify-center text-red-500 font-mono p-6 text-center">
+        <FaBolt className="text-4xl mb-4 opacity-50" />
+        <h2 className="text-xl font-bold mb-2">PROTOCOL NOT FOUND</h2>
+        <p className="text-sm text-gray-500 mb-6">
+           Could not match ID: <span className="text-white">"{sessionId}"</span>
+        </p>
+        <button 
+            onClick={() => navigate('/patient/dashboard')}
+            className="px-6 py-2 border border-red-500 rounded hover:bg-red-900/30 transition flex items-center gap-2"
+        >
+            <FaArrowLeft /> Return to Dashboard
         </button>
+    </div>
+  );
+
+  // --- RENDER ---
+  return (
+    <div className="w-full h-screen bg-black relative overflow-hidden">
+      
+      {/* HUD */}
+      <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-10 pointer-events-none">
+        <div className="bg-slate-900/80 backdrop-blur border border-slate-700 rounded-lg px-6 py-3 text-cyan-400 font-mono">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">Active Protocol</span>
+            <span className="text-lg font-bold text-white shadow-cyan-500/50 drop-shadow-sm">{currentAssignment.gameName}</span>
+        </div>
+        
+        <div className="flex gap-4 items-center pointer-events-auto">
+             <div className="bg-slate-900/80 border border-slate-700 rounded-lg px-6 py-3 text-white font-mono text-right">
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">Score</span>
+                <span className="text-xl font-bold">{score}</span>
+             </div>
+             
+             <button 
+                onClick={() => setIsPlaying(!isPlaying)}
+                className={`px-8 py-3 rounded-lg font-bold tracking-wider transition-all shadow-lg ${isPlaying ? 'bg-slate-700 text-slate-300' : 'bg-cyan-600 text-white'}`}
+             >
+                {isPlaying ? 'PAUSE' : 'START SESSION'}
+             </button>
+             
+             <button 
+                onClick={() => navigate('/patient/dashboard')}
+                className="p-3 rounded-lg bg-red-900/20 border border-red-900/50 text-red-500 hover:bg-red-900/40 transition-all"
+             >
+                Exit
+             </button>
+        </div>
+      </div>
+
+      {/* GAME RENDERER */}
+      <div className="w-full h-full">
+         <GameComponent 
+            config={currentAssignment.config} 
+            isPlaying={isPlaying}
+            onScore={handleScore}
+            onMiss={handleMiss}
+            difficulty={currentAssignment.config?.speed || 5} 
+         />
       </div>
 
       <SessionReportModal 
-          isOpen={showReport}
-          onClose={() => setShowReport(false)}
-          data={{
-              assignmentId: assignment._id,
-              gameId: assignment.gameId,
-              gameName: assignment.gameName,
-              score: score,
-              accuracy: accuracy,
-              duration: (assignment.settings.duration || 300) - timeLeft,
-              startTime: new Date().toISOString(), 
-              endTime: new Date().toISOString()
-          }}
+         isOpen={showReport} 
+         onClose={() => navigate('/patient/dashboard')}
+         score={score}
+         gameName={currentAssignment.gameName}
       />
     </div>
   );

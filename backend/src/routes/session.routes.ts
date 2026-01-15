@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { protect, authorizeRoles } from '../middlewares/auth.middleware';
+import { protect, authorize } from '../middlewares/auth.middleware';
 import validate from '../middlewares/validateResource';
 import { saveSessionSchema } from '../schemas/session.schema';
 import { saveSessionHandler, getSessionHistoryHandler } from '../controllers/session.controller';
@@ -11,16 +11,16 @@ router.use(protect);
 
 //  Save Session 
 router.post(
-    '/save', 
-    authorizeRoles('patient'), 
-    validate(saveSessionSchema), 
+    '/save',
+    authorize('patient'),
+    validate(saveSessionSchema),
     saveSessionHandler
 );
 
 // Get History
 router.get(
     '/history',
-    authorizeRoles('patient'),
+    authorize('patient'),
     getSessionHistoryHandler
 );
 

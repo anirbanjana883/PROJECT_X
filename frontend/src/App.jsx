@@ -1,68 +1,60 @@
-import React from "react";
-import { useLocation } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { FaSpinner } from "react-icons/fa";
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+// import { BrowserRouter as Router } ...  <-- REMOVE THIS IMPORT
+import { Toaster } from 'react-hot-toast';
+import { useGetCurrentUser } from './hooks/useGetCurrentUser';
 
-// Hooks & Utils
-import useGetCurrentUser from "./hooks/useGetCurrentUser";
-import ScrollToTop from "./components/ui/ScrollToTop";
-import { selectIsLoading } from "./redux/slices/authSlice";
+// Pages
+import LoginPage from './pages/public/LoginPage';
+import SignupPage from './pages/public/SignupPage';
+import UnauthorizedPage from './pages/public/UnauthorizedPage';
 
-// Layout
-import Navbar from "./components/layout/Navbar";
+// Security
+import ProtectedRoute from './components/layout/ProtectedRoute';
 
-// Routing
-import AppRoutes from "./routes/AppRoutes"; // ✅ Import the new router
+// --- Placeholder Dashboards ---
+const DoctorDashboard = () => <div className="p-10 text-2xl">👨‍⚕️ Doctor Dashboard (Locked)</div>;
+const PatientDashboard = () => <div className="p-10 text-2xl">🏥 Patient Dashboard (Locked)</div>;
+const AdminDashboard = () => <div className="p-10 text-2xl">⚙️ Admin Dashboard (Locked)</div>;
 
-export const serverUrl = import.meta.env.VITE_API_URL 
-  ? import.meta.env.VITE_API_URL.replace('/api/v1', '') 
-  : "http://localhost:5000";
-
-function App() {
-  // 1. Fetch User Session
-  useGetCurrentUser();
-
-  // 2. Global State
-  const isLoading = useSelector(selectIsLoading);
-  const location = useLocation();
-
-  // 3. Navbar Visibility Logic
-  // Hide navbar on Auth pages and inside Game Sessions
-  const hideNavPaths = ["/login", "/signup", "/forgot-password"];
-  const isGameSession = location.pathname.startsWith("/therapy/session/");
-  const showNav = !hideNavPaths.includes(location.pathname) && !isGameSession;
-
-  // 4. Loading Screen (Block app until auth check completes)
-  if (isLoading) {
-    return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-[#020617]">
-         <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
-         <p className="text-cyan-500 font-bold animate-pulse tracking-widest text-sm">INITIALIZING INDRIYA-X...</p>
-      </div>
-    );
-  }
+const App = () => {
+  // 1. Fetch User on Mount
+  useGetCurrentUser(); 
 
   return (
-    <div className="app-bg">
-      {showNav && <Navbar />}
-
-      <ToastContainer 
-        position="bottom-right" 
-        theme="colored" 
-        autoClose={3000}
-        toastClassName="!bg-[#111] !text-white !font-bold !rounded-xl !border !border-gray-800" 
-      />
+    <>
+      {/* Toaster can sit here, outside the Routes but inside the Main Router */}
+      <Toaster position="top-center" />
       
-      <ScrollToTop />
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        
+        {/* Redirect root to login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-      {/* Main Content Area */}
-      <div className={showNav ? "pt-16" : ""}>
-        <AppRoutes /> {/* ✅ All routes are handled here now */}
-      </div>
-    </div>
+        {/* 🔒 PROTECTED: DOCTOR */}
+        <Route element={<ProtectedRoute allowedRoles={['doctor']} />}>
+          <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+        </Route>
+
+        {/* 🔒 PROTECTED: PATIENT */}
+        <Route element={<ProtectedRoute allowedRoles={['patient']} />}>
+          <Route path="/patient/dashboard" element={<PatientDashboard />} />
+        </Route>
+
+        {/* 🔒 PROTECTED: ADMIN */}
+        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        </Route>
+
+        {/* 404 Catch All */}
+        <Route path="*" element={<div className="p-10">404 - Page Not Found</div>} />
+      </Routes>
+    </>
   );
-}
+};
 
 export default App;

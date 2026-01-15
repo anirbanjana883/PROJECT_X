@@ -15,13 +15,13 @@ import TherapySessionPage from '../components/features/therapy/TherapySessionPag
 
 // Doctor Pages
 import DoctorDashboard from '../pages/doctor/DoctorDashboard';
-import DoctorPatientView from '../pages/doctor/DoctorPatientView'; // ✅ The new Cockpit
+import DoctorPatientView from '../pages/doctor/DoctorPatientView'; 
 
 // Admin Pages
 import AdminDashboard from '../pages/admin/AdminDashboard';
 
 // Common Pages
-import ProfilePage from '../pages/common/ProfilePage'; // ✅ The Universal Profile
+import ProfilePage from '../pages/common/ProfilePage';
 
 // --- Import Guards ---
 import PatientRoute from './PatientRoute';
@@ -57,14 +57,16 @@ const AppRoutes = () => {
       {/* --- PROTECTED: PATIENT --- */}
       <Route element={<PatientRoute />}>
         <Route path="/patient/dashboard" element={<PatientDashboard />} />
-        <Route path="/therapy/session/:id" element={<TherapySessionPage />} />
+        
+        {/* FIX: Changed :id to :sessionId to match TherapySessionPage.jsx */}
+        <Route path="/therapy/session/:sessionId" element={<TherapySessionPage />} />
+        
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
 
       {/* --- PROTECTED: DOCTOR --- */}
       <Route element={<DoctorRoute />}>
         <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-        {/*  The New Cockpit Route */}
         <Route path="/doctor/patient/:patientId" element={<DoctorPatientView />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
